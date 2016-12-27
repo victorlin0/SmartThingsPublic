@@ -29,6 +29,10 @@ preferences {
   input ("delayMillis", "number", title: "Command delay in ms", 
     description: "Time in milliseconds to delay sending multiple commands.", defaultValue: 1,
     required: yes, range: "0..5000")
+
+  input ("onCmdControl", "number", title: "On Command Control", 
+    description: "0:None, 1:Switch1 2:Switch2, 3:Both", defaultValue: 3,
+    required: yes, range: "0..3")
 }
 
 metadata {
@@ -40,12 +44,13 @@ metadata {
         attribute "switch1", "string"
         attribute "switch2", "string"
 
+        command "on"
+        command "off"
         command "on1"
         command "off1"
         command "on2"
         command "off2"
 
-//        fingerprint deviceId: "0x1001", manufacturer: "Vision Security", model: "5911", inClusters: "0x60, 0x25, 0x27, 0x85, 0x72, 0x86" 
         fingerprint mfr: "0109", prod: "2017", model: "1717"
 	}
 
@@ -184,16 +189,69 @@ def off1() {
 def on2() {
     log.debug "Executing 'on2' with delay of ${settings.delayMillis}"
     delayBetween([
-        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:2, destinationEndPoint:2, commandClass:37, command:1, parameter:[255]).format(),
-        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:2, destinationEndPoint:2, commandClass:37, command:2).format()
+        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:1, parameter:[255]).format(),
+        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:2).format()
     ], settings.delayMillis)
 }
 
 def off2() {
     log.debug "Executing 'off2' with delay of ${settings.delayMillis}"
     delayBetween([
-        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:2, destinationEndPoint:2, commandClass:37, command:1, parameter:[0]).format(),
-        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:2, destinationEndPoint:2, commandClass:37, command:2).format()
+        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:1, parameter:[0]).format(),
+        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:2).format()
     ], settings.delayMillis)
+}
+
+def on() {
+    log.debug "Executing 'on' with ${settings.offCmdControl} and delay  ${settings.delayMillis}"
+    switch (settings.onCmdControl ){
+    	case 3:
+	    	delayBetween([
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:1, parameter:[255]).format(),
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:2).format(),
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:1, parameter:[255]).format(),
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:2).format()
+	    	], settings.delayMillis)
+            break;
+		case 1:
+            delayBetween([
+		        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:1, parameter:[255]).format(),
+        		zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:2).format()
+    		], settings.delayMillis)
+        	break;
+        case 2:
+            delayBetween([
+		        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:1, parameter:[255]).format(),
+        		zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:2).format()
+    		], settings.delayMillis)
+            break;
+    }
+}
+
+def off() {
+    log.debug "Executing 'off' with ${settings.offCmdControl} and delay  ${settings.delayMillis}"
+    switch (settings.onCmdControl ){
+    	case 3:
+	    	delayBetween([
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:1, parameter:[0]).format(),
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:2).format(),
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:1, parameter:[0]).format(),
+	        	zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:2).format()
+	    	], settings.delayMillis)
+            break;
+		case 1:
+            delayBetween([
+		        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:1, parameter:[0]).format(),
+        		zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:1, commandClass:37, command:2).format()
+    		], settings.delayMillis)
+
+            break;
+        case 2:
+            delayBetween([
+		        zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:1, parameter:[0]).format(),
+        		zwave.multiChannelV3.multiChannelCmdEncap(sourceEndPoint:1, destinationEndPoint:2, commandClass:37, command:2).format()
+    		], settings.delayMillis)
+            break;
+    }
 }
 
